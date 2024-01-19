@@ -10,4 +10,4 @@ class User(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=datetime.now())
 
     def __repr__(self) -> str:
-        return 'User - {self.username}'
+        return f'User - {self.username}'

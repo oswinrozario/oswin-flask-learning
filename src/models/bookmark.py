@@ -30,4 +30,4 @@ class Bookmark(db.Model):
         self.short_url = self.generate_short_characters()
 
     def __repr__(self) -> str:
-        return 'Bookmark - {self.url}'
+        return f'Bookmark - {self.url}'
