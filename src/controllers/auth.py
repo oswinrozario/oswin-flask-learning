@@ -48,6 +48,15 @@ def register_controller():
 def login_controller():
     
     try:
+        parser = reqparse.RequestParser()
+        parser.add_argument('email', type=str, required=True, help='Email is required')
+        parser.add_argument('password', type=str, required=True, help='Password is required')
+
+        try:
+            data = parser.parse_args(strict=True)
+        except:
+            return {'message': 'Invalid or missing JSON data'}, 400
+        
         email = request.json.get('email', '')
         password = request.json.get('password', '')
         
