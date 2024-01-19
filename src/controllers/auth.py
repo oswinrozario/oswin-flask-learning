@@ -1,8 +1,9 @@
-from flask import Blueprint
+from flask import Blueprint, request, jsonify
 from flask_restful import Resource, reqparse
 from passlib.hash import bcrypt
 from src.service.db import db
 from src.models.user import User
+from flask_jwt_extended import jwt_required, create_access_token, create_refresh_token, get_jwt_identity
 
 auth = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 
@@ -45,7 +46,35 @@ def register_controller():
 
 @auth.post('/login')
 def login_controller():
+    
     try:
-        return 'user login'
+        email = request.json.get('email', '')
+        password = request.json.get('password', '')
+        
+        if not email or not password:
+            return {'message': 'Email, and password are required'}, 400
+
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            is_pass_correct = bcrypt.verify(password,user.password)
+
+            if is_pass_correct:
+                refresh = create_refresh_token(identity=user.id)
+                access = create_access_token(identity=user.id)
+
+                return jsonify({
+                    'user': {
+                        'refresh_token': refresh,
+                        'access_token': access,
+                        'username': user.username,
+                        'email': user.email,
+                        'id':user.id,
+                    }
+
+                }), 200
+            return jsonify({'error': 'Wrong password'}), 401
+
+        return jsonify({'error': 'User Not Found'}), 401
     except Exception as e:
-        return f'Error during login: {str(e)}', 500
+        return {'error': 'Error during login'}, 500
