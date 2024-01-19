@@ -109,4 +109,66 @@ def get_bookmark(id):
         'updated_at': bookmark.updated_at,
     }), 200
         
+        
+@bookmarks.delete("/<int:id>")
+@jwt_required()
+def delete_bookmark_controller(id):
+    current_user = get_jwt_identity()
+
+    bookmark = Bookmark.query.filter_by(user_id=current_user, id=id).first()
+
+    if not bookmark:
+        return jsonify({'message': 'Item not found'}), 404
+
+    db.session.delete(bookmark)
+    db.session.commit()
+
+    return jsonify({}), 204
+
+
+@bookmarks.put('/<int:id>')
+@bookmarks.patch('/<int:id>')
+@jwt_required()
+def editbookmark(id):
+    current_user = get_jwt_identity()
+
+    bookmark = Bookmark.query.filter_by(user_id=current_user, id=id).first()
+
+    if not bookmark:
+        return jsonify({'message': 'Item not found'}), 404
+
+    body = request.get_json().get('body', '')
+    url = request.get_json().get('url', '')
+    
+    if body is '' and url is '':
+        return {'error':'Nothing to update'}, 400
+
+    if url and not validators.url(url):
+        return jsonify({
+            'error': 'Enter a valid url'
+        }), 400
+    
+    if Bookmark.query.filter_by(url=url, user_id=current_user).first():
+        return jsonify({
+            'error': 'URL already exists'
+        }), 409
+
+    if body is not '':
+        bookmark.body = body
+    
+    if url is not '':
+        bookmark.url = url
+
+    db.session.commit()
+
+    return jsonify({
+        'id': bookmark.id,
+        'url': bookmark.url,
+        'short_url': bookmark.short_url,
+        'visit': bookmark.visits,
+        'body': bookmark.body,
+        'created_at': bookmark.created_at,
+        'updated_at': bookmark.updated_at,
+    }), 200
+
     
